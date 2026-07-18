@@ -1,7 +1,7 @@
 import re
 from flask import Blueprint, request, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from models.schema import db, User
 
 auth_bp = Blueprint('auth', __name__)
@@ -55,3 +55,31 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('product.list_products'))
+
+# --- 기존 코드 아래에 추가 ---
+
+@auth_bp.route('/mypage', methods=['GET', 'POST'])
+@login_required
+def mypage():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+
+        # 시큐어코딩: 현재 비밀번호가 맞는지 검증 (계정 탈취 방어)
+        if not check_password_hash(current_user.password_hash, current_password):
+            flash("현재 비밀번호가 일치하지 않습니다.", "error")
+            return redirect(url_for('auth.mypage'))
+
+        # 시큐어코딩: 새 비밀번호 복잡도 검증
+        if not re.match(r'^[a-zA-Z0-9]{5,}$', new_password):
+            flash("새 비밀번호는 영문과 숫자만 사용하여 5자리 이상이어야 합니다.", "error")
+            return redirect(url_for('auth.mypage'))
+
+        # 시큐어코딩: 단방향 해시 암호화 후 저장
+        current_user.password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        
+        flash("비밀번호가 성공적으로 변경되었습니다.", "success")
+        return redirect(url_for('auth.mypage'))
+
+    return render_template('mypage.html')
