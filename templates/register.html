@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div style="width: 100%; max-width: 380px;">
+        <div class="text-center mb-5">
+            <h2 class="fw-bolder text-dark" style="letter-spacing: -1px;">회원가입</h2>
+            <p class="text-muted">간단히 가입하고 바로 시작하세요!</p>
+        </div>
+
+        <form action="{{ url_for('auth.register') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-4">
+                <input type="text" class="form-control form-control-lg border-0 border-bottom rounded-0 bg-transparent px-1" name="username" placeholder="사용할 아이디" required style="box-shadow: none;">
+            </div>
+            
+            <div class="mb-5">
+                <input type="password" class="form-control form-control-lg border-0 border-bottom rounded-0 bg-transparent px-1" name="password" 
+                       pattern="^[a-zA-Z0-9]{5,}$" title="영문과 숫자로만 5자리 이상 입력해주세요." placeholder="비밀번호 (영문, 숫자 5자리 이상)" required style="box-shadow: none;">
+            </div>
+            
+            <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(45deg, #212529, #495057); border: none;">
+                가입 완료하기
+            </button>
+        </form>
+        
+        <div class="text-center mt-5">
+            <a href="{{ url_for('auth.login') }}" class="text-secondary fw-medium text-decoration-none border-bottom border-secondary pb-1">로그인하러 가기</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-8">
+        <!-- 상품 이미지 영역 -->
+        <div class="rounded-4 overflow-hidden shadow-sm mb-4" style="background: #e9ecef; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+            {% if product.image_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" alt="상품 이미지" style="width: 100%; height: auto; max-height: 600px; object-fit: cover;">
+            {% else %}
+                <i class="bi bi-image" style="font-size: 5rem; color: #adb5bd;"></i>
+            {% endif %}
+        </div>
+
+        <!-- 판매자 정보 -->
+        <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
+            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 50px; height: 50px;">
+                <i class="bi bi-person-fill fs-3 text-secondary"></i>
+            </div>
+            <div>
+                <p class="mb-0 fw-bold fs-5">{{ seller.username }}</p>
+                <small class="text-muted">판매자</small>
+            </div>
+        </div>
+
+        <!-- 상품 세부 정보 -->
+        <div class="mb-5">
+            <h2 class="fw-bolder mb-3">{{ product.title }}</h2>
+            <h3 class="fw-bolder mb-4" style="color: #0d6efd;">{{ "{:,.0f}".format(product.price) }}원</h3>
+            <p style="white-space: pre-wrap; font-size: 1.1rem; line-height: 1.6;" class="text-dark">{{ product.description }}</p>
+        </div>
+        
+       <!-- 액션 버튼 -->
+        <div class="d-grid gap-2">
+            {% if current_user.is_authenticated %}
+                {% if current_user.id != product.seller_id %}
+                    <a href="{{ url_for('chat.start_chat', product_id=product.id) }}" class="btn btn-primary btn-lg fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-chat-dots-fill me-2"></i>판매자와 채팅하기
+                    </a>
+                    <a href="{{ url_for('admin.report_product', product_id=product.id) }}" class="btn btn-outline-danger mt-2 rounded-pill fw-bold">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>이 상품 신고하기
+                    </a>
+                {% else %}
+                    <!-- 추가: 판매자 본인 전용 수정/삭제 버튼 -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('product.edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-lg w-50 fw-bold rounded-pill">
+                            수정하기
+                        </a>
+                        <form action="{{ url_for('product.delete_product', product_id=product.id) }}" method="POST" class="w-50" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-lg w-100 fw-bold rounded-pill">
+                                삭제하기
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg fw-bold rounded-pill shadow-sm">
+                    로그인하고 채팅하기
+                </a>
+            {% endif %}
+        </div>
+{% endblock %}

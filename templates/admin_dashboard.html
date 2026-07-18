@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mt-4">
+    <h3 class="fw-bold mb-4 text-dark"><i class="bi bi-shield-lock-fill text-danger me-2"></i>관리자 대시보드 (신고 내역)</h3>
+    
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">신고일</th>
+                        <th>신고자</th>
+                        <th>대상 상품</th>
+                        <th>상품 작성자</th>
+                        <th>신고 사유</th>
+                        <th class="text-end pe-4">제재 조치 (CSRF 방어 적용)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td class="ps-4 text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ report.reporter.username }}</td>
+                        <td><a href="{{ url_for('product.product_detail', product_id=report.product.id) }}" class="text-decoration-none fw-bold" target="_blank">{{ report.product.title }}</a></td>
+                        <td><span class="badge bg-secondary">{{ report.product.seller_id }}번 유저</span></td>
+                        <td>{{ report.reason }}</td>
+                        <td class="text-end pe-4">
+                            <form action="{{ url_for('admin.force_delete_product', product_id=report.product.id) }}" method="POST" class="d-inline" onsubmit="return confirm('이 상품을 강제 삭제하시겠습니까?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger btn-sm fw-bold mb-1">상품 삭제</button>
+                            </form>
+                            <form action="{{ url_for('admin.ban_user', user_id=report.product.seller_id) }}" method="POST" class="d-inline" onsubmit="return confirm('이 작성자를 영구 정지하시겠습니까?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-dark btn-sm fw-bold mb-1">유저 정지</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">접수된 신고 내역이 없습니다.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,45 +1,57 @@
-from flask import Blueprint, request, jsonify
+import re
+from flask import Blueprint, request, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required
 from models.schema import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+        if not re.match(r'^[a-zA-Z0-9]{5,}$', password):
+            flash("비밀번호는 영문과 숫자만 사용하여 5자리 이상이어야 합니다.", "error")
+            return redirect(url_for('auth.register'))
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already exists"}), 409
+        if User.query.filter_by(username=username).first():
+            flash("이미 존재하는 아이디입니다.", "error")
+            return redirect(url_for('auth.register'))
 
-    # 시큐어코딩: pbkdf2:sha256 알고리즘 및 솔트(Salt)가 적용된 안전한 암호화
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    
-    new_user = User(username=username, password_hash=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, password_hash=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
 
-    return jsonify({"message": "User registered successfully"}), 201
+        flash("회원가입이 완료되었습니다. 로그인해주세요!", "success")
+        return redirect(url_for('auth.login'))
+        
+    return render_template('register.html')
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    user = User.query.filter_by(username=data.get('username')).first()
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
 
-    # 시큐어코딩: 해시된 비밀번호 안전 비교 (타이밍 공격 방어)
-    if user and check_password_hash(user.password_hash, data.get('password')):
-        login_user(user)
-        return jsonify({"message": "Logged in successfully"}), 200
-
-    return jsonify({"error": "Invalid credentials"}), 401
+        if user and check_password_hash(user.password_hash, password):
+            # 시큐어코딩: 정지된 계정 접근 차단
+            if user.is_banned:
+                flash("관리자에 의해 이용이 정지된 계정입니다.", "error")
+                return redirect(url_for('auth.login'))
+                
+            login_user(user)
+            return redirect(url_for('product.list_products'))
+        
+        flash("아이디 또는 비밀번호가 올바르지 않습니다.", "error")
+    
+    return render_template('login.html')
 
 @auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    return jsonify({"message": "Logged out successfully"}), 200
+    return redirect(url_for('product.list_products'))
