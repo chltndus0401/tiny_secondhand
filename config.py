@@ -1,9 +1,6 @@
 import os
 
 class Config:
-    # 시큐어코딩: 하드코딩된 Secret Key 지양, 환경변수 사용
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-fallback-secure-key'
-    
-    # Database 설정 예시
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///tiny_shop.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        raise ValueError("Critical Security Error: 환경 변수에 SECRET_KEY가 설정되지 않았습니다.")

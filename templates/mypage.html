@@ -28,7 +28,7 @@
                     
                     <div class="mb-4">
                         <label class="form-label fw-medium">새 비밀번호</label>
-                        <input type="password" class="form-control" name="new_password" required placeholder="영문, 숫자 포함 5자리 이상" pattern="^[a-zA-Z0-9]{5,}$" title="영문과 숫자만 사용하여 5자리 이상이어야 합니다.">
+                        <input type="password" class="form-control" name="new_password" required placeholder="영문, 숫자, 특수문자 포함 8자리 이상" pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="영문, 숫자, 특수문자를 포함하여 8자리 이상이어야 합니다.">
                     </div>
                     
                     <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-3">비밀번호 변경하기</button>

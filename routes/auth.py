@@ -3,6 +3,8 @@ from flask import Blueprint, request, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from models.schema import db, User
+RESTRICTED_USERNAMES = ['admin', 'root', 'system', 'administrator', 'manager']
+PASSWORD_REGEX = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$'
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -12,8 +14,12 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if not re.match(r'^[a-zA-Z0-9]{5,}$', password):
-            flash("비밀번호는 영문과 숫자만 사용하여 5자리 이상이어야 합니다.", "error")
+        if username.lower() in RESTRICTED_USERNAMES:
+            flash("해당 아이디는 시스템 예약어로 사용할 수 없습니다.", "error")
+            return redirect(url_for('auth.register'))
+
+        if not re.match(PASSWORD_REGEX, password):
+            flash("비밀번호는 영문, 숫자, 특수문자를 포함하여 8자리 이상이어야 합니다.", "error")
             return redirect(url_for('auth.register'))
 
         if User.query.filter_by(username=username).first():
